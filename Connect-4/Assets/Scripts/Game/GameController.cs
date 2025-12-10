@@ -9,6 +9,7 @@ public class GameController : MonoBehaviour
 
     [Header("View")]
     [SerializeField] private BoardView boardView;
+    [SerializeField] private BoardHighlighter boardHighlighter;
 
     [Header("UI")]
     [SerializeField] private TextMeshProUGUI statusText;
@@ -16,6 +17,8 @@ public class GameController : MonoBehaviour
     private BoardState _boardState;
     private int _currentPlayerId = 1;
     private bool _isGameOver = false;
+
+    private bool _isAnimatingMove = false;
 
     private Stack<MoveResult> _moveHistory = new Stack<MoveResult>();
 
@@ -33,6 +36,11 @@ public class GameController : MonoBehaviour
             Debug.LogError("BoardView not assigned.");
             enabled = false;
             return;
+        }
+
+        if (boardHighlighter == null)
+        {
+            Debug.LogWarning("BoardHighlighter not assigned.");
         }
 
         StartNewGame();
@@ -78,8 +86,14 @@ public class GameController : MonoBehaviour
         _boardState = new BoardState(config.rows, config.columns);
         _currentPlayerId = 1;
         _isGameOver = false;
+        _isAnimatingMove = false;
 
         _moveHistory.Clear();
+
+        if (boardHighlighter != null)
+        {
+            boardHighlighter.ClearHighlights();
+        }
 
         // Clear old discs from view
         boardView.ClearDiscs();
@@ -89,9 +103,9 @@ public class GameController : MonoBehaviour
     }
 
     // Called when a player attempts to play in a column
-    public void TryPlayInColumn(int column)
+    public void PlayInColumn(int column)
     {
-        Debug.Log($"GameController.TryPlayInColumn({column})");
+        Debug.Log($"GameController.PlayInColumn({column})");
 
         if (_isGameOver)
             return;
@@ -107,12 +121,9 @@ public class GameController : MonoBehaviour
         if (!move.Success)
             return;
 
-        Debug.Log($"Spawning disc at {move.Position} for player {move.PlayerId}");
-
-        // Visual spawn
-        boardView.SpawnDisc(move.Position, move.PlayerId);
-
         _moveHistory.Push(new MoveResult(true, move.PlayerId, move.Position));
+
+        Debug.Log($"Spawning disc at {move.Position} for player {move.PlayerId}");
 
         // Win check
         WinResult winResult = WinChecker.CheckForWin(
@@ -121,36 +132,61 @@ public class GameController : MonoBehaviour
             move.PlayerId,
             config.connectLength);
 
-        if (winResult.IsWin)
+        bool isDraw = _boardState.IsFull();
+
+        _isAnimatingMove = true;
+
+        // Visual spawn
+        boardView.SpawnDisc(move.Position, move.PlayerId, () =>
         {
-            _isGameOver = true;
-            UpdateStatusText($"Player {_currentPlayerId} wins!");
-            return;
+            _isAnimatingMove = false;
+
+            if (winResult.IsWin)
+            {
+                _isGameOver = true;
+
+                // Highlight winning line (if highlighter is present)
+                if (boardHighlighter != null && winResult.WinningPositions != null)
+                {
+                    boardHighlighter.HighlightWinningLine(winResult.WinningPositions);
+                }
+                UpdateStatusText($"Player {_currentPlayerId} wins!");
+                return;
+            }
+            // Draw check
+            if (_boardState.IsFull())
+            {
+                _isGameOver = true;
+                UpdateStatusText("Draw!");
+                return;
+            }
+
+            // Switch player
+            _currentPlayerId++;
+            if (_currentPlayerId > config.playerCount) _currentPlayerId = 1;
+
+            UpdateStatusText($"Player {_currentPlayerId}'s turn");
         }
-
-        // Draw check
-        if (_boardState.IsFull())
-        {
-            _isGameOver = true;
-            UpdateStatusText("Draw!");
-            return;
-        }
-
-        // Switch player
-        _currentPlayerId++;
-        if(_currentPlayerId > config.playerCount) _currentPlayerId = 1;
-
-        UpdateStatusText($"Player {_currentPlayerId}'s turn");
+        );
     }
 
     // public undo method (hook this to a UI button)
     public void UndoLastMove()
     {
+        if (_isAnimatingMove) return;
+
         if (_moveHistory.Count == 0)
         {
             Debug.Log("No moves to undo.");
             return;
         }
+
+        // If we had a winning highlight, clear it
+        if (boardHighlighter != null)
+        {
+            boardHighlighter.ClearHighlights();
+        }
+
 
         MoveResult lastMove = _moveHistory.Pop();
 

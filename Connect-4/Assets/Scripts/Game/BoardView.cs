@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -49,7 +50,7 @@ public class BoardView : MonoBehaviour
             for (int col = 0; col < _columns; col++)
             {
                 Vector3 pos = GetWorldPosition(row, col);
-                GameObject cell = Object.Instantiate(cellPrefab, pos, Quaternion.identity, transform);
+                GameObject cell = Instantiate(cellPrefab, pos, Quaternion.identity, transform);
                 _cellInstances[row, col] = cell;
             }
         }
@@ -86,12 +87,12 @@ public class BoardView : MonoBehaviour
     }
 
 
-    public void SpawnDisc(BoardPosition pos, int playerId)
+    public void SpawnDisc(BoardPosition pos, int playerId, Action onDropComplete = null)
     {
         Vector3 targetPos = GetWorldPosition(pos.Row, pos.Column);
         Vector3 spawnPos = targetPos + Vector3.up * dropHeight;
 
-        GameObject disc = Object.Instantiate(discPrefab, spawnPos, Quaternion.identity, discsParent);
+        GameObject disc = Instantiate(discPrefab, spawnPos, Quaternion.identity, discsParent);
 
         if (playerId > 0 && playerId <= playerMaterials.Length)
         {
@@ -112,10 +113,10 @@ public class BoardView : MonoBehaviour
         _discInstances[pos] = disc;
 
 
-        StartCoroutine(AnimateDiscDrop(disc.transform, targetPos));
+        StartCoroutine(AnimateDiscDrop(disc.transform, targetPos, onDropComplete));
     }
 
-    private IEnumerator AnimateDiscDrop(Transform disc, Vector3 targetPos)
+    private IEnumerator AnimateDiscDrop(Transform disc, Vector3 targetPos, Action onComplete)
     {
         Vector3 startPos = disc.position;
         float t = 0f;
@@ -147,6 +148,8 @@ public class BoardView : MonoBehaviour
 
         disc.position = targetPos;
         disc.rotation = Quaternion.identity;
+
+        onComplete?.Invoke();
     }
 
     // Removes a single disc at a position
@@ -190,5 +193,10 @@ public class BoardView : MonoBehaviour
         float z = origin.z;
 
         return new Vector3(x, y, z);
+    }
+
+    public bool GetDisc(BoardPosition pos, out GameObject disc)
+    {
+        return _discInstances.TryGetValue(pos, out disc);
     }
 }

@@ -18,6 +18,6 @@ public class ClickHandler : MonoBehaviour
         }
 
         Debug.Log($"ClickHandler.HandleClick: column {columnIndex}", this);
-        gameController.TryPlayInColumn(columnIndex);
+        gameController.PlayInColumn(columnIndex);
     }
 }
