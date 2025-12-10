@@ -1,10 +1,12 @@
-// Board coordinates representing a cell by row and column
+// BoardPosition:
+// - Represents a cell by row and column on the board
+// - Used for addressing BoardState cells and move history
 public readonly struct BoardPosition
 {
     public int Row { get; }
     public int Column { get; }
 
-    // Initializes a new instance of the "BoardPosition" struct
+    // Initializes a new instance of the BoardPosition struct
     public BoardPosition(int row, int column)
     {
         Row = row;

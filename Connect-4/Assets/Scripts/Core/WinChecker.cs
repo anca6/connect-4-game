@@ -1,43 +1,46 @@
+using System;
 using System.Collections.Generic;
 
-// Win checking:
+// WinChecker:
 // - Starts from the last move and scans all directions (horizontal, vertical, and two diagonals)
-// - Builds the player moves' path based on the last move
-// - Detects win if the line length equals to connectLength
+// - Builds the path of consecutive cells for the player based on the last move
+// - Detects a win if the line length is greater or equal to connectLength
 public static class WinChecker
 {
+    // directions to scan from the last move: horizontal, vertical, and two diagonals
+    private static readonly (int dRow, int dCol)[] Directions =
+    {
+        (0, 1),   // horizontal
+        (1, 0),   // vertical
+        (1, 1),   // diagonal down-right
+        (1, -1)   // diagonal down-left
+    };
+
+    // Checks if the last move caused a win for the given player
     public static WinResult CheckForWin(
         BoardState board,
         BoardPosition lastMove,
         int playerId,
         int connectLength)
     {
-        // directions to scan from the last move
-        var directions = new (int dRow, int dCol)[]
+        // iterating in every direction starting from the last move
+        foreach (var (dRow, dCol) in Directions)
         {
-            (0, 1),   // horizontal
-            (1, 0),   // vertical
-            (1, 1),   // diagonal down-right
-            (1, -1)   // diagonal down-left
-        };
-
-        foreach (var (dRow, dCol) in directions)
-        {
-            // building line of consecutive playerId cells
-            var line = AddLine(board, lastMove, playerId, dRow, dCol);
+            // building line of consecutive playerId cells in both directions
+            var line = BuildLine(board, lastMove, playerId, dRow, dCol);
 
             // exiting if we found a winning line
             if (line.Count >= connectLength)
             {
-                return new WinResult(true, line);
+                return WinResult.Win(line);
             }
         }
 
         return WinResult.NoWin();
     }
 
-    // Collects consecutive cells for playerId starting at 'start' and going both ways
-    private static List<BoardPosition> AddLine(
+    // Builds a line of consecutive cells for playerId starting at 'start' and going both ways
+    private static List<BoardPosition> BuildLine(
         BoardState board,
         BoardPosition start,
         int playerId,
@@ -46,7 +49,7 @@ public static class WinChecker
     {
         var result = new List<BoardPosition> { start };
 
-        // forward (+dRow, +dCol)
+        // moving forward (+dRow, +dCol)
         int row = start.Row + dRow;
         int col = start.Column + dCol;
 
@@ -57,7 +60,7 @@ public static class WinChecker
             col += dCol;
         }
 
-        // backward (-dRow, -dCol)
+        // moving backward (-dRow, -dCol)
         row = start.Row - dRow;
         col = start.Column - dCol;
 
@@ -71,9 +74,12 @@ public static class WinChecker
         return result;
     }
 
-    // Safety check for board boundaries
+    // Checks if (row, col) is inside the board boundaries
     private static bool IsInBounds(BoardState board, int row, int col)
     {
-        return row >= 0 && row < board.Rows && col >= 0 && col < board.Columns;
+        return row >= 0 &&
+               row < board.Rows &&
+               col >= 0 &&
+               col < board.Columns;
     }
 }

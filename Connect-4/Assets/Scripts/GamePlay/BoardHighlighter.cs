@@ -1,22 +1,38 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+// BoardHighlighter:
+// - Highlights the winning discs when a player wins
+// - Temporarily changes scale and material of discs
+// - Restores original visuals on undo/new game
 public class BoardHighlighter : MonoBehaviour
 {
+    #region Fields
+
     [Header("References")]
     [SerializeField] private BoardView boardView;
 
     [Header("Highlight Settings")]
     [SerializeField] private Material highlightMaterial;
-    [SerializeField] private float scaleMultiplier = 1.2f;
+    [SerializeField] private float scaleMultiplier = 1f;
 
-    // Track original state so we can revert
+    // Tracking original state so we can revert
     private readonly Dictionary<BoardPosition, Vector3> _originalScales = new();
     private readonly Dictionary<BoardPosition, Material> _originalMaterials = new();
+
+    #endregion
+
+    #region Highlight
 
     // Called by GameController when someone wins
     public void HighlightWinningLine(IReadOnlyList<BoardPosition> winningPositions)
     {
+        if (boardView == null)
+        {
+            GameLogger.LogWarning("[BoardHighlighter.HighlightWinningLine]: BoardView not assigned.");
+            return;
+        }
+
         if (winningPositions == null || winningPositions.Count == 0)
             return;
 
@@ -26,10 +42,13 @@ public class BoardHighlighter : MonoBehaviour
         }
     }
 
-    // Called by GameController on undo / new game
+    // Called by GameController on undo/new game
     public void ClearHighlights()
     {
-        // Restore scales
+        if (boardView == null)
+            return;
+
+        // restoring scales
         foreach (var kvp in _originalScales)
         {
             BoardPosition pos = kvp.Key;
@@ -41,7 +60,7 @@ public class BoardHighlighter : MonoBehaviour
             }
         }
 
-        // Restore materials
+        // restoring materials
         foreach (var kvp in _originalMaterials)
         {
             BoardPosition pos = kvp.Key;
@@ -61,18 +80,22 @@ public class BoardHighlighter : MonoBehaviour
         _originalMaterials.Clear();
     }
 
+    #endregion
+
+    #region Internals
+
     private void ApplyHighlight(BoardPosition pos)
     {
         if (!boardView.GetDisc(pos, out GameObject disc) || disc == null)
             return;
 
-        // Cache original scale once
+        // caching original scale once
         if (!_originalScales.ContainsKey(pos))
         {
             _originalScales[pos] = disc.transform.localScale;
         }
 
-        // Cache original material once
+        // caching and overriding material
         Renderer renderer = disc.GetComponentInChildren<Renderer>();
         if (renderer != null)
         {
@@ -87,7 +110,9 @@ public class BoardHighlighter : MonoBehaviour
             }
         }
 
-        // Simple scale-up highlight
+        // scale up highlight
         disc.transform.localScale = _originalScales[pos] * scaleMultiplier;
     }
+
+    #endregion
 }
