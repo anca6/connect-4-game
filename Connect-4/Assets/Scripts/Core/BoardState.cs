@@ -71,6 +71,22 @@ public class BoardState
         return MoveResult.Successful(playerId, targetRow, column);
     }
 
+
+   // Undo a move at a specific position
+    public void UndoMove(BoardPosition position)
+    {
+        if (position.Row < 0 || position.Row >= Rows ||
+            position.Column < 0 || position.Column >= Columns)
+        {
+            Debug.LogWarning($"[BoardState.UndoMove]: Invalid position {position}");
+            return;
+        }
+
+        _grid[position.Row, position.Column] = 0;
+        TurnCount = Math.Max(0, TurnCount - 1);
+    }
+
+
     // Returns true if the board is full (no more possible moves)
     public bool IsFull()
     {

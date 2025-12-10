@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 
@@ -15,6 +16,8 @@ public class GameController : MonoBehaviour
     private BoardState _boardState;
     private int _currentPlayerId = 1;
     private bool _isGameOver = false;
+
+    private Stack<MoveResult> _moveHistory = new Stack<MoveResult>();
 
     private void Start()
     {
@@ -76,11 +79,10 @@ public class GameController : MonoBehaviour
         _currentPlayerId = 1;
         _isGameOver = false;
 
+        _moveHistory.Clear();
+
         // Clear old discs from view
-        foreach (Transform child in boardView.transform)
-        {
-            Destroy(child.gameObject);
-        }
+        boardView.ClearDiscs();
 
         boardView.Initialize(config.rows, config.columns);
         UpdateStatusText($"Player {_currentPlayerId}'s turn");
@@ -110,6 +112,8 @@ public class GameController : MonoBehaviour
         // Visual spawn
         boardView.SpawnDisc(move.Position, move.PlayerId);
 
+        _moveHistory.Push(new MoveResult(true, move.PlayerId, move.Position));
+
         // Win check
         WinResult winResult = WinChecker.CheckForWin(
             _boardState,
@@ -133,7 +137,34 @@ public class GameController : MonoBehaviour
         }
 
         // Switch player
-        _currentPlayerId = (_currentPlayerId == 1 ? 2 : 1);
+        _currentPlayerId++;
+        if(_currentPlayerId > config.playerCount) _currentPlayerId = 1;
+
+        UpdateStatusText($"Player {_currentPlayerId}'s turn");
+    }
+
+    // public undo method (hook this to a UI button)
+    public void UndoLastMove()
+    {
+        if (_moveHistory.Count == 0)
+        {
+            Debug.Log("No moves to undo.");
+            return;
+        }
+
+        MoveResult lastMove = _moveHistory.Pop();
+
+        // Undo in model
+        _boardState.UndoMove(lastMove.Position);
+
+        // Undo in view
+        boardView.RemoveDisc(lastMove.Position);
+
+        // Once we undo, the game is definitely not over from that last move
+        _isGameOver = false;
+
+        // Set turn back to the player who made the undone move
+        _currentPlayerId = lastMove.PlayerId;
         UpdateStatusText($"Player {_currentPlayerId}'s turn");
     }
 

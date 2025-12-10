@@ -8,7 +8,7 @@ public readonly struct MoveResult
     public BoardPosition Position { get; }
 
     // Private constructor used by methods below
-    private MoveResult(bool success, int playerId, BoardPosition position)
+    public MoveResult(bool success, int playerId, BoardPosition position)
     {
         Success = success;
         PlayerId = playerId;
