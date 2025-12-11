@@ -1,21 +1,22 @@
-# Connect 4 (Unity)
+# 🔗 Connect 4
 
-Connect 4 built in Unity with a focus on clean architecture, configurable rules, and a robust gameplay loop.
+Connect 4 (Unity) is a structured implementation of the classic Connect 4 game, focusing on clean architecture and testable core logic.
+Developed in Unity (C#), it separates pure game rules from the Unity layer, featuring configurable board settings, animated 3D visuals, undo support, and robust win detection across multiple directions.
 
-* * *
+---
 
 ## ⚙️ Tech Overview
 
 | Area           | Implementation                                                                 |
 |----------------|-------------------------------------------------------------------------------|
-| Engine         | Unity 6000.2.6f2                                                              |
-| Language       | C#                                                                            |
-| Core Systems   | Board state, move handling, undo, win detection, turn management             |
-| Tools          | Scriptable configuration, centralized logging |
+| **Engine**         | Unity 6000.2.6f2                                                              |
+| **Language**       | C#                                                                            |
+| **Core Systems**   | Board state, move handling, undo, win detection, turn management             |
+| **Tools**          | Scriptable configuration, centralized logging |
 
-* * *
+---
 
-## 🎮 Core Features
+## 🧩 Core Features
 
 - Local multiplayer Connect 4
 - Configurable:
@@ -28,7 +29,7 @@ Connect 4 built in Unity with a focus on clean architecture, configurable rules,
 
 Core game rules (board state, moves, win checks) are implemented as pure C# logic. Unity components handle visuals, input, and scene management.
 
-* * *
+---
 
 ## 🧭 How to Run
 
@@ -54,9 +55,9 @@ Core game rules (board state, moves, win checks) are implemented as pure C# logi
   - Restart game  
   - Quit to menu  
 
-* * *
+---
 
-## 🧩 Configuration
+## 💻 Configuration
 
 Game rules are configured via a `GameConfigurator` ScriptableObject assigned to `GameManager`:
 
@@ -67,7 +68,7 @@ Game rules are configured via a `GameConfigurator` ScriptableObject assigned to 
 
 These values are tweakable in the Inspector; the board, win condition, and interactions adapt accordingly.
 
-* * *
+---
 
 ## 🧱 Architecture Overview
 
@@ -87,7 +88,7 @@ These classes don’t depend on Unity APIs and are designed to be testable indep
 - `UIController`, `ClickHandler`, `Spinner` – menu & in-game UI wiring, column click handling, simple menu visuals  
 - `GameLogger` – central debug logger with a global enable/disable flag  
 
-* * *
+---
 
 ## 📜 Logging
 
@@ -96,4 +97,4 @@ All non-trivial logs go through `GameLogger`:
 - `GameLogger.IsEnabled` can be toggled via `GameManager`’s `enableLogging` field.
 - Provides `Log`, `LogWarning`, and `LogError` wrappers around `Debug.Log*`.
 
-* * *
+---
